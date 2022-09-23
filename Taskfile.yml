@@ -1,0 +1,40 @@
+
+#
+# Kuma Uptime Taskfile
+#
+# https://taskfile.dev
+# https://github.com/go-task/task/blob/master/docs/usage.md
+
+version: '3'
+
+dotenv: ['../../.env', '../../.env.secrets', './.env', './.env.secrets', '{{.ENV}}/.env.', '{{.HOME}}/.env']
+
+vars:
+  PORT: 3001
+  LOGGING_ENABLED:
+    sh: ([[ "{{.LOGGING}}" == "true" ]] && echo "2>&1 | tee ../../logs/uptime_kuma_server.log" || echo "")  # ternary for enabling debugging in ansible playbooks
+
+tasks:
+
+  start:
+    desc: starts Uptime monitoring
+    cmds:
+      - "PORT={{.PORT}} docker-compose -f ./docker-compose.yml up {{.LOGGING_ENABLED}}"
+
+  stop:
+    desc: stops uptime monitoring
+    cmds:
+      - "docker-compose -f ./docker-compose.yml down {{.LOGGING_ENABLED}}"
+
+  install_docker_run:
+    desc: installs and starts Uptime monitoring by Docker run
+    cmds:
+      - docker volume create uptime-kuma
+      - "docker run -d --restart=always -p {{.PORT}}:3001 -v uptime-kuma:/app/data --name uptime-kuma louislam/uptime-kuma:1 {{.LOGGING_ENABLED}}"
+
+  start_docker_run:
+    desc: starts Uptime monitoring by Docker run
+    cmds:
+      - "docker run -d --restart=always -p {{.PORT}}:3001 -v uptime-kuma:/app/data --name uptime-kuma louislam/uptime-kuma:1 {{.LOGGING_ENABLED}}"
+
+
